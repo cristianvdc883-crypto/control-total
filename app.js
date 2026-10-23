@@ -147,11 +147,11 @@ let errSync='';
 const loc=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,16)};
 function panel(){const s=new Set(remoto.filas.map(r=>r.sid));return remoto.filas.concat(regs.filter(r=>!s.has(r.sid)).map(r=>({...r,quien:perfil?perfil.email.split('@')[0]:'yo',sitio:r.sitio_id})))}
 async function cargarPerfil(u){
-const {data,error}=await sb.from('profiles').select('id,email,rol,campo_id,invite_code,baja,es_dueno,campos!campo_id(nombre,max_devices)').eq('id',u.id).single();
+const {data,error}=await sb.from('profiles').select('id,email,rol,campo_id,invite_code,baja,es_dueno,campos!campo_id(nombre,max_devices,modulos)').eq('id',u.id).single();
 if(error)throw error;
 if(data.baja)throw new Error('El patrón dio de baja tu acceso.');
 if(!data.campos)throw new Error('Tu cuenta está vencida o suspendida. Consultá con quien te dio la app.');
-perfil={dueno:!!data.es_dueno,id:data.id,email:data.email,rol:data.rol,campo_id:data.campo_id,code:data.invite_code,campo:data.campos&&data.campos.nombre,max:data.campos&&data.campos.max_devices};
+perfil={dueno:!!data.es_dueno,id:data.id,email:data.email,rol:data.rol,campo_id:data.campo_id,code:data.invite_code,campo:data.campos&&data.campos.nombre,max:data.campos&&data.campos.max_devices,modulos:(data.campos&&data.campos.modulos)||['gasoil']};
 localStorage.setItem('perfil',JSON.stringify(perfil));
 }
 async function iniciar(u){
@@ -173,12 +173,47 @@ if(error)return aMsg('No se pudo crear la cuenta. '+(code?'Revisá el código o 
 if(!data.session)return aMsg('Revisá tu email para confirmar la cuenta y después ingresá.');
 try{await iniciar(data.user)}catch(e){aMsg('Cuenta creada, pero no se pudo cargar el perfil: '+(e.message||e))}
 };
+const MODS={
+gasoil:{n:'Gasoil',t:'⛽ Gasoil Campo',d:'Combustible & stock',c:'#ffe49a',e:'🛢️',listo:1},
+kiosco:{n:'Kiosco',t:'🏪 Kiosco',d:'Ventas & productos',c:'#bfe0a8',e:'🏪',listo:1},
+taller:{n:'Taller',t:'🔧 Taller',d:'Servicios & reparaciones',c:'#efcbb8',e:'🔧',listo:0},
+alquileres:{n:'Alquileres',t:'🏠 Alquileres',d:'Propiedades & contratos',c:'#a9c4ea',e:'🏠',listo:0}};
+let modAct='';
+function mostrarHub(){
+modAct='';
+$('tit').textContent='CONTROL TOTAL';
+$('rubros').classList.add('hide');
+document.querySelector('nav').classList.add('hide');
+const ms=perfil.modulos||['gasoil'];
+$('hubGrid').innerHTML=Object.entries(MODS).map(([k,m])=>`<button class="tile${ms.includes(k)&&m.listo?'':' off'}" style="background:${m.c}" data-m="${k}"><span style="font-size:42px">${m.e}</span><br>${m.n}<small>${!m.listo?'Próximamente':ms.includes(k)?m.d:'No habilitado'}</small></button>`).join('')+(perfil.dueno?'<button class="tile" style="background:#e6e0f8" data-m="plat"><span style="font-size:42px">👑</span><br>Plataforma<small>Clientes y cobros</small></button>':'');
+show('hub');
+}
+$('hubGrid').onclick=e=>{
+const b=e.target.closest('.tile');if(!b)return;
+const k=b.dataset.m;
+if(k==='plat'){modAct='plat';$('tit').textContent='👑 Plataforma';$('rubros').classList.remove('hide');document.querySelector('nav').classList.add('hide');return show('plat')}
+const m=MODS[k],ms=perfil.modulos||['gasoil'];
+if(!m.listo)return alert('Este rubro todavía no está disponible. Muy pronto.');
+if(!ms.includes(k))return alert('Este rubro no está habilitado en tu cuenta. Consultá con quien te dio la app.');
+entrarModulo(k);
+};
+function entrarModulo(k){
+modAct=k;
+const ms=perfil.modulos||['gasoil'],g=k==='gasoil';
+$('tit').textContent=MODS[k].t;
+$('rubros').classList.toggle('hide',ms.length<2&&!perfil.dueno);
+document.querySelector('nav').classList.toggle('hide',!(g&&perfil.rol==='ADMIN'));
+show(g?'cargar':'kiosco');
+}
+$('rubros').onclick=mostrarHub;
 function mostrarApp(){
 const adm=perfil.rol==='ADMIN';
 $('hdr').classList.remove('hide');
-document.querySelector('nav').classList.toggle('hide',!adm);$('nPlat').classList.toggle('hide',!perfil.dueno);
+$('nPlat').classList.toggle('hide',!perfil.dueno);
 $('quien').textContent=perfil.email.split('@')[0]+' · '+(adm?'Patrón':'Maquinista');
-show('cargar');render();renderEstado();pintarEq();
+render();renderEstado();pintarEq();
+const ms=perfil.modulos||['gasoil'];
+if(ms.length===1&&!perfil.dueno)entrarModulo(ms[0]);else mostrarHub();
 }
 function renderEstado(){
 const n=regs.filter(r=>!r.ok).length;
@@ -199,8 +234,9 @@ if(!sb||!perfil||!navigator.onLine)return renderEstado();
 try{
 const q=await sb.from('profiles').select('baja').eq('id',perfil.id).maybeSingle();
 if(q.data&&q.data.baja){alert('El patrón dio de baja tu acceso a este campo.');regs=[];persist();$('salir').click();return}
-const cc=await sb.from('campos').select('id').eq('id',perfil.campo_id).maybeSingle();
+const cc=await sb.from('campos').select('id,modulos').eq('id',perfil.campo_id).maybeSingle();
 if(!cc.error&&!cc.data){errSync=' · ⚠ cuenta vencida o suspendida';renderEstado();return}
+if(cc.data&&cc.data.modulos&&JSON.stringify(cc.data.modulos)!==JSON.stringify(perfil.modulos)){perfil.modulos=cc.data.modulos;localStorage.setItem('perfil',JSON.stringify(perfil));if(modAct==='')mostrarHub()}
 const pend=regs.filter(r=>!r.ok);
 if(pend.length){
 const {error}=await sb.from('cargas').upsert(pend.map(r=>({sync_id:r.sid,campo_id:perfil.campo_id,user_id:perfil.id,maquina:r.eq,sitio_id:r.sitio_id||null,litros:r.l,horometro:r.h||null,lote:r.lote||null,lat:r.lat??null,lng:r.lng??null,created_at:new Date(r.f).toISOString()})),{onConflict:'sync_id',ignoreDuplicates:true});
