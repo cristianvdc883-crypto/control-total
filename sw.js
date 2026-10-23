@@ -1,6 +1,6 @@
 // Subí el número de versión cada vez que cambies index.html
-const V = 'gasoil-shell-v8';
-const OCR = 'gasoil-ocr'; // motor OCR y librerías; no se borra al actualizar
+const V = 'ct-shell-v1';
+const OCR = 'ct-ocr'; // motor OCR y librerías; no se borra al actualizar
 const SHELL = ['./', 'index.html', 'app.js', 'admin.js', 'manifest.json', 'icon-192.png', 'icon-512.png'];
 const CDN = ['cdn.jsdelivr.net', 'tessdata.projectnaptha.com']; // único externo que se guarda
 
@@ -16,7 +16,7 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(k => k.startsWith('gasoil-shell-') && k !== V).map(k => caches.delete(k))
+        keys.filter(k => k.startsWith('ct-shell-') && k !== V).map(k => caches.delete(k))
       ))
       // limpia respuestas de Supabase que versiones anteriores guardaron por error
       .then(() => caches.open(OCR))
