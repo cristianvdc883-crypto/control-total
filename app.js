@@ -201,7 +201,7 @@ function entrarModulo(k){
 modAct=k;
 const ms=perfil.modulos||['gasoil'],g=k==='gasoil';
 $('tit').textContent=MODS[k].t;
-$('rubros').classList.toggle('hide',ms.length<2&&!perfil.dueno);
+$('rubros').classList.remove('hide');
 document.querySelector('nav').classList.toggle('hide',!(g&&perfil.rol==='ADMIN'));
 show(g?'cargar':'kiosco');
 }
@@ -212,8 +212,7 @@ $('hdr').classList.remove('hide');
 $('nPlat').classList.toggle('hide',!perfil.dueno);
 $('quien').textContent=perfil.email.split('@')[0]+' · '+(adm?'Patrón':'Maquinista');
 render();renderEstado();pintarEq();
-const ms=perfil.modulos||['gasoil'];
-if(ms.length===1&&!perfil.dueno)entrarModulo(ms[0]);else mostrarHub();
+mostrarHub();
 }
 function renderEstado(){
 const n=regs.filter(r=>!r.ok).length;
