@@ -40,7 +40,7 @@ const hoy=new Date();hoy.setHours(0,0,0,0);
 const falta=c=>Math.round((new Date(c.vence+'T00:00:00')-hoy)/864e5);
 const pv=CL.filter(c=>c.vence&&falta(c)<=7).sort((x,y)=>x.vence.localeCompare(y.vence));
 $('pVence').innerHTML=pv.map(c=>{const f=falta(c);return `<div class="row"><div><b>${esc(c.nombre)}</b><br><small>${esc(c.patron||'')}</small></div><b style="${f<0?'color:#c62828':''}">${f<0?'vencido hace '+(-f)+' d':f===0?'vence hoy':'en '+f+' d'}</b></div>`}).join('')||'<div class="st">Nadie vence en los próximos 7 días.</div>';
-$('pClientes').innerHTML=CL.map(c=>`<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>${esc(c.nombre)}</b><small style="font-weight:700;color:${!c.activo?'#777':(c.vence&&falta(c)<0)?'#c62828':'#1e9e4a'}">${!c.activo?'SUSPENDIDO':(c.vence&&falta(c)<0)?'VENCIDO':'AL DÍA'}</small></div><small>${esc(c.patron||'')} · ${c.usuarios}/${c.max_devices} usuarios · ${c.vence?'vence '+dd(c.vence+'T00:00:00'):'sin vencimiento'}${COT?' · a cobrar '+peso(montoDe(30)):''}</small><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="chip" data-a="pago" data-c="${c.campo_id}">＋ Pago</button><button class="chip" data-a="${c.activo?'suspender':'reactivar'}" data-c="${c.campo_id}">${c.activo?'Suspender':'Reactivar'}</button><button class="chip" data-a="fecha" data-c="${c.campo_id}">Vence el…</button><button class="chip" data-a="usuarios" data-c="${c.campo_id}">Usuarios</button></div>${pagoId===c.campo_id?formPago(c.campo_id):''}${fechaId===c.campo_id?formFecha(c):''}</div>`).join('')||'<div class="st">Todavía no hay clientes.</div>';
+$('pClientes').innerHTML=CL.map(c=>`<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>${esc(c.nombre)}</b><small style="font-weight:700;color:${!c.activo?'#777':(c.vence&&falta(c)<0)?'#c62828':'#1e9e4a'}">${!c.activo?'SUSPENDIDO':(c.vence&&falta(c)<0)?'VENCIDO':'AL DÍA'}</small></div><small>${esc(c.patron||'')} · ${c.usuarios}/${c.max_devices} usuarios · ${c.vence?'vence '+dd(c.vence+'T00:00:00'):'sin vencimiento'}${COT?' · a cobrar '+peso(montoDe(30)):''}</small><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="chip" data-a="pago" data-c="${c.campo_id}">＋ Pago</button><button class="chip" data-a="${c.activo?'suspender':'reactivar'}" data-c="${c.campo_id}">${c.activo?'Suspender':'Reactivar'}</button><button class="chip" data-a="fecha" data-c="${c.campo_id}">Vence el…</button><button class="chip" data-a="usuarios" data-c="${c.campo_id}">Usuarios</button></div><div style="margin-top:6px"><small>Rubros:</small> ${['gasoil','kiosco'].map(m=>`<button class="chip" style="${(c.modulos||['gasoil']).includes(m)?'background:#1e9e4a;color:#fff':''}" data-a="mod" data-m="${m}" data-c="${c.campo_id}">${m}</button>`).join(' ')}</div>${pagoId===c.campo_id?formPago(c.campo_id):''}${fechaId===c.campo_id?formFecha(c):''}</div>`).join('')||'<div class="st">Todavía no hay clientes.</div>';
 const n=new Date();
 const tm=PG.filter(x=>{const d=new Date(x.creado);return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()}).reduce((s,x)=>s+ +x.monto,0);
 $('pTotal').textContent='Cobrado este mes: '+peso(tm);
@@ -69,6 +69,14 @@ if(a==='pagoNo'){pagoId='';return renderPlat()}
 if(a==='fecha'){fechaId=c;pagoId='';return renderPlat()}
 if(a==='fechaNo'){fechaId='';return renderPlat()}
 if(sinRed())return;
+if(a==='mod'){
+const cl=CL.find(x=>x.campo_id===c),m=e.target.dataset.m;
+let ms=cl.modulos||['gasoil'];ms=ms.includes(m)?ms.filter(x=>x!==m):[...ms,m];
+if(!ms.length)return alert('Tiene que quedar al menos un rubro.');
+const {error}=await sb.rpc('dueno_modulos',{p_id:c,p_modulos:ms});
+if(error)return alert('No se pudo: '+error.message);
+return pintarPlat();
+}
 if(a==='pagoOk'){
 const m=parseFloat($('gM').value),d=parseInt($('gN').value);
 const v=$('gV').value;if(!(m>=0)||!(d>0)||!v)return alert('Poné el monto, los días y la fecha.');
