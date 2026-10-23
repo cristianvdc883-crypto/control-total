@@ -158,6 +158,14 @@ async function iniciar(u){
 await cargarPerfil(u);mostrarApp();sync();
 if(navigator.onLine&&!localStorage.getItem('ocr_ok'))$('prep').click();
 }
+function modoReg(n){
+$('aB1').classList.toggle('hide',n!==1);$('aB2').classList.toggle('hide',n!==2);
+$('aM1').classList.toggle('sel',n===1);$('aM2').classList.toggle('sel',n===2);
+if(n===1)$('aCode').value='';else{$('aAct').value='';$('aCampo').value=''}
+$('aMsg').textContent='';
+}
+$('aNueva').onclick=()=>{$('aForm').classList.toggle('hide');if(!$('aForm').classList.contains('hide'))modoReg(1)};
+$('aM1').onclick=()=>modoReg(1);$('aM2').onclick=()=>modoReg(2);
 $('aIng').onclick=async()=>{
 if(!sb)return aMsg('No cargó el servidor. Abrí la app con señal.');
 aMsg('Ingresando…');
@@ -169,7 +177,7 @@ $('aReg').onclick=async()=>{
 if(!sb)return aMsg('No cargó el servidor. Abrí la app con señal.');
 const code=$('aCode').value.trim();aMsg('Creando cuenta…');
 const {data,error}=await sb.auth.signUp({email:$('aMail').value.trim(),password:$('aPass').value,options:{data:{invite_code:code,campo_nombre:$('aCampo').value.trim(),activation_code:$('aAct').value.trim()}}});
-if(error)return aMsg('No se pudo crear la cuenta. '+(code?'Revisá el código o si el campo ya llegó a su límite de dispositivos. ':'Para crear una cuenta de patrón necesitás un código de activación sin usar. ')+error.message);
+if(error)return aMsg('No se pudo crear la cuenta. '+(code?'Revisá el código de invitación o si el equipo ya llegó a su límite de usuarios. ':'Revisá el código de activación: sirve una sola vez. ')+error.message);
 if(!data.session)return aMsg('Revisá tu email para confirmar la cuenta y después ingresá.');
 try{await iniciar(data.user)}catch(e){aMsg('Cuenta creada, pero no se pudo cargar el perfil: '+(e.message||e))}
 };
@@ -269,3 +277,4 @@ if(perfil){mostrarApp();sync()}else show('auth');
 addEventListener('online',sync);addEventListener('offline',renderEstado);
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+  
