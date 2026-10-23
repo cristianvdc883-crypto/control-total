@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#1e9e4a">
+<meta name="theme-color" content="#14213d">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>Gasoil Campo</title>
+<title>Control Total</title>
 <script>window.onerror=function(m,u,l){document.body.insertAdjacentHTML('beforeend','<pre style="color:#b00;white-space:pre-wrap;font-size:12px;padding:8px">⚠ '+m+' (línea '+l+')</pre>')}</script>
 <style>
 :root{--bg:#f4f5f2;--card:#fff;--tx:#1b1f1a;--mu:#667064;--bd:#d9ddd5;--g:#1e9e4a}
@@ -32,10 +32,10 @@ h3{margin:14px 0 4px;font-size:15px;color:var(--mu)}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;padding:14px 4px;background:none;border:0;color:var(--mu);font-size:14px}
 nav button.on{color:var(--g);font-weight:700}
-.hdr{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin:-6px 0 12px}.hdr button{background:none;border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:8px}.hide{display:none}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin:-6px 0 12px}.hdr button{background:none;border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:8px}.hub{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.tile{border:0;border-radius:22px;padding:20px 8px;text-align:center;font-size:19px;font-weight:700;color:#1b1f1a;min-height:150px}.tile small{display:block;font-weight:400;font-size:12px;margin-top:6px}.tile.off{opacity:.5}.hide{display:none}
 </style></head><body>
-<h1>⛽ Gasoil Campo</h1>
-<div id="hdr" class="hdr hide"><span id="quien"></span><span id="est"></span><button id="salir">Salir</button></div>
+<h1 id="tit">CONTROL TOTAL</h1>
+<div id="hdr" class="hdr hide"><span id="quien"></span><span id="est"></span><button id="rubros" class="hide">⇦ Rubros</button><button id="salir">Salir</button></div>
 <section id="v-auth" class="hide"><div class="card" style="margin-top:0">
 <label style="margin-top:0">Email</label><input id="aMail" type="email" autocomplete="username">
 <label>Contraseña (mínimo 6)</label><input id="aPass" type="password" autocomplete="current-password">
@@ -47,6 +47,12 @@ nav button.on{color:var(--g);font-weight:700}
 <button class="sec" id="aReg">Crear cuenta</button>
 <div class="st" id="aMsg"></div>
 </div></section>
+<section id="v-hub" class="hide">
+<h2 style="margin:4px 0">Elegí tu rubro</h2><div class="st">Seleccioná el rubro para comenzar a gestionar</div>
+<div id="hubGrid" class="hub"></div>
+<div class="st" style="text-align:center;margin-top:16px">¿Necesitás agregar un rubro? Consultá con quien te dio la app.</div>
+</section>
+<section id="v-kiosco" class="hide"><div class="card"><h3 style="margin-top:0">🏪 Kiosco</h3><div class="st">Este rubro se está armando: productos y stock, ventas, proveedores, gastos y balance. Muy pronto.</div></div></section>
 <section id="v-cargar" class="hide">
 <button class="big" id="btnFoto">📷 FOTO AL SURTIDOR</button>
 <input type="file" id="file" accept="image/*" capture="environment" class="hide">
