@@ -15,6 +15,7 @@ function show(v){
 document.querySelectorAll('section').forEach(s=>s.classList.toggle('hide',s.id!=='v-'+v));
 document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
 if(v==='plat')pintarPlat();
+if(v[0]==='k')kPintar();
 if(v==='resumen'){renderRes();sync().then(renderRes)} if(v==='datos'){renderInfo();sync().then(renderInfo)}
 }
 function openForm(){
@@ -191,7 +192,7 @@ function mostrarHub(){
 modAct='';
 $('tit').textContent='CONTROL TOTAL';
 $('rubros').classList.add('hide');
-document.querySelector('nav').classList.add('hide');
+document.querySelector('nav').classList.add('hide');$('navK').classList.add('hide');
 const ms=perfil.modulos||['gasoil'];
 $('hubGrid').innerHTML=Object.entries(MODS).map(([k,m])=>`<button class="tile${ms.includes(k)&&m.listo?'':' off'}" style="background:${m.c}" data-m="${k}"><span style="font-size:42px">${m.e}</span><br>${m.n}<small>${!m.listo?'Próximamente':ms.includes(k)?m.d:'No habilitado'}</small></button>`).join('')+(perfil.dueno?'<button class="tile" style="background:#e6e0f8" data-m="plat"><span style="font-size:42px">👑</span><br>Plataforma<small>Clientes y cobros</small></button>':'');
 show('hub');
@@ -199,7 +200,7 @@ show('hub');
 $('hubGrid').onclick=e=>{
 const b=e.target.closest('.tile');if(!b)return;
 const k=b.dataset.m;
-if(k==='plat'){modAct='plat';$('tit').textContent='👑 Plataforma';$('rubros').classList.remove('hide');document.querySelector('nav').classList.add('hide');return show('plat')}
+if(k==='plat'){modAct='plat';$('tit').textContent='👑 Plataforma';$('rubros').classList.remove('hide');document.querySelector('nav').classList.add('hide');$('navK').classList.add('hide');return show('plat')}
 const m=MODS[k],ms=perfil.modulos||['gasoil'];
 if(!m.listo)return alert('Este rubro todavía no está disponible. Muy pronto.');
 if(!ms.includes(k))return alert('Este rubro no está habilitado en tu cuenta. Consultá con quien te dio la app.');
@@ -211,7 +212,9 @@ const ms=perfil.modulos||['gasoil'],g=k==='gasoil';
 $('tit').textContent=MODS[k].t;
 $('rubros').classList.remove('hide');
 document.querySelector('nav').classList.toggle('hide',!(g&&perfil.rol==='ADMIN'));
-show(g?'cargar':'kiosco');
+$('navK').classList.toggle('hide',!(k==='kiosco'&&perfil.rol==='ADMIN'));
+show(g?'cargar':'kvender');
+if(!g)kSync();
 }
 $('rubros').onclick=mostrarHub;
 function mostrarApp(){
@@ -223,7 +226,7 @@ render();renderEstado();pintarEq();
 mostrarHub();
 }
 function renderEstado(){
-const n=regs.filter(r=>!r.ok).length;
+const n=regs.filter(r=>!r.ok).length+(typeof kCola!=='undefined'?kCola.length:0);
 $('est').textContent=(navigator.onLine?'● En línea':'○ Sin señal')+(n?' · '+n+' sin subir':'')+errSync;
 }
 async function bajarPanel(){
@@ -253,16 +256,17 @@ await bajarSitios();
 await bajarEquipos();
 await bajarMias();
 if(perfil.rol==='ADMIN'){await bajarPanel();await bajarStock()}
+if((perfil.modulos||[]).includes('kiosco')&&typeof kSync==='function')await kSync();
 }catch(e){}
 render();renderEstado();
 }
 $('salir').onclick=async()=>{
-const n=regs.filter(r=>!r.ok).length;
+const n=regs.filter(r=>!r.ok).length+(typeof kCola!=='undefined'?kCola.length:0);
 if(n&&!confirm(n+' cargas todavía no se subieron y se perderían. ¿Salir igual?'))return;
 try{await sb.auth.signOut()}catch(e){}
 regs=[];persist();perfil=null;remoto={filas:[],miembros:[]};
-['perfil','remoto','mias','miasOk','sitios','stock','equipos','sitio'].forEach(k=>localStorage.removeItem(k));mias=[];listaEq=[];sitios=[];stock={};
-$('hdr').classList.add('hide');document.querySelector('nav').classList.add('hide');show('auth');
+['perfil','remoto','mias','miasOk','sitios','stock','equipos','sitio','k_prod','k_prov','k_cola'].forEach(k=>localStorage.removeItem(k));mias=[];listaEq=[];sitios=[];stock={};if(typeof kProd!=='undefined'){kProd=[];kProv=[];kCola=[];kCart={}}
+$('hdr').classList.add('hide');document.querySelector('nav').classList.add('hide');$('navK').classList.add('hide');show('auth');
 };
 const lim=(p,ms)=>Promise.race([p,new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),ms))]);
 async function arrancar(){
