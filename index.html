@@ -32,7 +32,7 @@ h3{margin:14px 0 4px;font-size:15px;color:var(--mu)}
 nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom)}
 nav button{flex:1;padding:14px 4px;background:none;border:0;color:var(--mu);font-size:14px}
 nav button.on{color:var(--g);font-weight:700}
-.hdr{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin:-6px 0 12px}.hdr button{background:none;border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:8px}.hub{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.tile{border:0;border-radius:22px;padding:20px 8px;text-align:center;font-size:19px;font-weight:700;color:#1b1f1a;min-height:150px}.tile small{display:block;font-weight:400;font-size:12px;margin-top:6px}.tile.off{opacity:.5}.logo{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:76px;margin:0 auto 10px;padding:10px;border-radius:20px;background:#14213d}.logo i{display:block;height:26px;border-radius:7px}.sec.sel{border-color:var(--g);color:var(--g);font-weight:700}.hide{display:none}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;color:var(--mu);margin:-6px 0 12px}.hdr button{background:none;border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:8px}.hub{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.tile{border:0;border-radius:22px;padding:20px 8px;text-align:center;font-size:19px;font-weight:700;color:#1b1f1a;min-height:150px}.tile small{display:block;font-weight:400;font-size:12px;margin-top:6px}.tile.off{opacity:.5}.logo{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:76px;margin:0 auto 10px;padding:10px;border-radius:20px;background:#14213d}.logo i{display:block;height:26px;border-radius:7px}.sec.sel{border-color:var(--g);color:var(--g);font-weight:700}#navK button{font-size:12px;padding:12px 2px}.hide{display:none}
 </style></head><body>
 <h1 id="tit">CONTROL TOTAL</h1>
 <div id="hdr" class="hdr hide"><span id="quien"></span><span id="est"></span><button id="rubros" class="hide">⇦ Rubros</button><button id="salir">Salir</button></div>
@@ -66,6 +66,21 @@ nav button.on{color:var(--g);font-weight:700}
 <div id="kForm"></div>
 <div class="card"><h3 style="margin-top:0">Por reponer</h3><div id="kBajo"></div></div>
 <div class="card"><h3 style="margin-top:0">Productos</h3><div id="kProds"></div></div>
+</section>
+<section id="v-kbalance" class="hide">
+<div class="two" style="align-items:center"><button class="chip" id="bPrev">◀</button><input id="bFecha" type="date" style="flex:3"><button class="chip" id="bNext">▶</button></div>
+<div class="two" style="margin-top:8px"><button class="sec sel" id="bDia" style="margin-top:0;flex:1">Día</button><button class="sec" id="bMes" style="margin-top:0;flex:1">Mes</button></div>
+<div class="card" id="bResumen"></div>
+<div class="two"><button class="sec sel" id="bTI" style="margin-top:0;flex:1">Ingresos</button><button class="sec" id="bTE" style="margin-top:0;flex:1">Egresos</button></div>
+<div class="card"><div id="bLista"></div></div>
+<div class="two"><button class="big" id="bGasto" style="flex:1;padding:14px;font-size:17px;background:#8b1a14;box-shadow:0 4px 0 #5c110d">− Nuevo gasto</button><button class="sec" id="bCsv" style="margin-top:0;flex:1">⬇ Reporte (CSV)</button></div>
+<div id="bForm"></div>
+</section>
+<section id="v-kdeudas" class="hide">
+<div class="card" style="margin-top:0"><div id="dTotal" style="font-size:20px;font-weight:700"></div></div>
+<button class="big" id="dNueva" style="padding:14px;font-size:17px;margin-top:14px">＋ Nueva deuda</button>
+<div id="dForm"></div>
+<div class="card"><div id="dLista"></div></div>
 </section>
 <section id="v-kprov" class="hide">
 <button class="big" id="kNuevoP" style="padding:16px;font-size:18px">＋ Proveedor nuevo</button>
@@ -150,13 +165,14 @@ nav button.on{color:var(--g);font-weight:700}
 <button data-v="plat" id="nPlat" class="hide">👑 Plataforma</button>
 <button data-v="datos">💾 Datos</button>
 </nav>
-<nav id="navK" class="hide"><button data-v="kvender" class="on">🛒 Vender</button><button data-v="kstock">📦 Stock</button><button data-v="kprov">🤝 Proveedores</button></nav>
+<nav id="navK" class="hide"><button data-v="kvender" class="on">🛒 Vender</button><button data-v="kstock">📦 Stock</button><button data-v="kbalance">📊 Balance</button><button data-v="kdeudas">💳 Deudas</button><button data-v="kprov">🤝 Proveed.</button></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" onerror="void 0"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" onerror="void 0"></script>
 <script src="app.js"></script>
 <script src="admin.js"></script>
 <script src="plat.js"></script>
 <script src="kiosco.js"></script>
+<script src="kiosco2.js"></script>
 <script>arrancar();</script>
 </body></html>
-                                                                                                                                                                                                                                                                                                                                                                        
+                                                      
