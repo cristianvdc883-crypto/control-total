@@ -16,7 +16,7 @@ document.querySelectorAll('section').forEach(s=>s.classList.toggle('hide',s.id!=
 document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
 if(v==='plat')pintarPlat();
 if(v[0]==='k')kPintar();
-if(v==='kbalance')kBal();if(v==='kdeudas')kDeu();
+if(v==='kbalance')kBal();if(v==='kdeudas')kDeu();if(v==='kstock')kMovs();
 if(v==='resumen'){renderRes();sync().then(renderRes)} if(v==='datos'){renderInfo();sync().then(renderInfo)}
 }
 function openForm(){
