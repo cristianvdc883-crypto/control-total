@@ -55,7 +55,23 @@ nav button.on{color:var(--g);font-weight:700}
 <div id="hubGrid" class="hub"></div>
 <div class="st" style="text-align:center;margin-top:16px">¿Necesitás agregar un rubro? Consultá con quien te dio la app.</div>
 </section>
-<section id="v-kiosco" class="hide"><div class="card"><h3 style="margin-top:0">🏪 Kiosco</h3><div class="st">Este rubro se está armando: productos y stock, ventas, proveedores, gastos y balance. Muy pronto.</div></div></section>
+<section id="v-kvender" class="hide">
+<div class="st" id="kMsg" style="font-weight:700;color:#1e9e4a"></div>
+<input id="kBuscar" placeholder="Buscar producto…" autocomplete="off" style="margin-bottom:10px">
+<div class="card" id="kCarro"></div>
+<div class="card"><div id="kLista"></div></div>
+</section>
+<section id="v-kstock" class="hide">
+<button class="big" id="kNuevo" style="padding:16px;font-size:18px">＋ Producto nuevo</button>
+<div id="kForm"></div>
+<div class="card"><h3 style="margin-top:0">Por reponer</h3><div id="kBajo"></div></div>
+<div class="card"><h3 style="margin-top:0">Productos</h3><div id="kProds"></div></div>
+</section>
+<section id="v-kprov" class="hide">
+<button class="big" id="kNuevoP" style="padding:16px;font-size:18px">＋ Proveedor nuevo</button>
+<div id="kFormP"></div>
+<div class="card"><div id="kProvs"></div></div>
+</section>
 <section id="v-cargar" class="hide">
 <button class="big" id="btnFoto">📷 FOTO AL SURTIDOR</button>
 <input type="file" id="file" accept="image/*" capture="environment" class="hide">
@@ -134,11 +150,13 @@ nav button.on{color:var(--g);font-weight:700}
 <button data-v="plat" id="nPlat" class="hide">👑 Plataforma</button>
 <button data-v="datos">💾 Datos</button>
 </nav>
+<nav id="navK" class="hide"><button data-v="kvender" class="on">🛒 Vender</button><button data-v="kstock">📦 Stock</button><button data-v="kprov">🤝 Proveedores</button></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js" onerror="void 0"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js" onerror="void 0"></script>
 <script src="app.js"></script>
 <script src="admin.js"></script>
 <script src="plat.js"></script>
+<script src="kiosco.js"></script>
 <script>arrancar();</script>
 </body></html>
-  
+                                                                                                                                                                                                                                                                                                                                                                        
