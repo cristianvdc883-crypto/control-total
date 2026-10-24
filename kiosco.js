@@ -14,11 +14,17 @@ const kAhora=()=>new Date().toISOString();
 async function kSync(){
 if(!sb||!perfil||!navigator.onLine||!(perfil.modulos||[]).includes('kiosco'))return;
 try{
-if(kCola.length){
-const {error}=await sb.from('k_mov').upsert(kCola.map(o=>({sync_id:o.sid,campo_id:perfil.campo_id,user_id:perfil.id,producto_id:o.pid,tipo:o.tipo,cantidad:o.cant,precio:o.precio,total:o.total,proveedor_id:o.prov||null,created_at:o.f})),{onConflict:'sync_id',ignoreDuplicates:true});
-if(!error){kCola=[];kGuardarCola()}
+const lotes=[
+['k_mov',kCola.filter(o=>o.pid),o=>({sync_id:o.sid,producto_id:o.pid,tipo:o.tipo,cantidad:o.cant,precio:o.precio,costo:o.costo||0,total:o.total,fiado:!!o.fiado,proveedor_id:o.prov||null,created_at:o.f})],
+['k_gastos',kCola.filter(o=>o.tipo==='gasto'),o=>({sync_id:o.sid,concepto:o.concepto,monto:o.monto,created_at:o.f})],
+['k_cuenta',kCola.filter(o=>o.tipo==='cuenta'),o=>({sync_id:o.sid,cliente:o.cliente,monto:o.monto,nota:o.nota||null,created_at:o.f})]];
+for(const [t,L,fn] of lotes){
+if(!L.length)continue;
+const {error}=await sb.from(t).upsert(L.map(o=>({campo_id:perfil.campo_id,user_id:perfil.id,...fn(o)})),{onConflict:'sync_id',ignoreDuplicates:true});
+if(!error)kCola=kCola.filter(o=>!L.includes(o));
 else if(!/fetch|network/i.test(String(error.message)))errSync=' · ⚠ '+String(error.message).slice(0,40);
 }
+kGuardarCola();
 const a=await sb.from('k_productos').select('id,nombre,costo,precio,stock,minimo').eq('campo_id',perfil.campo_id).eq('activo',true).order('nombre');
 if(!a.error){kProd=a.data.map(x=>({id:x.id,nombre:x.nombre,costo:+x.costo,precio:+x.precio,stock:+x.stock,minimo:+x.minimo}));localStorage.setItem('k_prod',JSON.stringify(kProd))}
 const b=await sb.from('k_proveedores').select('id,nombre,telefono,nota').eq('campo_id',perfil.campo_id).order('nombre');
@@ -33,7 +39,7 @@ const q=kFiltro.toLowerCase(),adm=perfil.rol==='ADMIN';
 const ids=Object.keys(kCart).filter(i=>kCart[i]>0&&kProd.some(p=>p.id===i));
 const tot=ids.reduce((s,i)=>s+kCart[i]*kProd.find(p=>p.id===i).precio,0);
 $('kCarro').classList.toggle('hide',!ids.length);
-$('kCarro').innerHTML=ids.length?ids.map(i=>{const p=kProd.find(x=>x.id===i);return `<div class="row"><div style="flex:1"><b>${esc(p.nombre)}</b><br><small>${kCart[i]} × ${money(p.precio)}</small></div><button class="chip" data-c="-" data-i="${i}">−</button><b>${money(kCart[i]*p.precio)}</b><button class="chip" data-c="+" data-i="${i}">＋</button></div>`}).join('')+`<div style="display:flex;gap:8px;margin-top:10px"><button class="big" data-c="ok" style="flex:1;padding:16px;font-size:20px">Cobrar ${money(tot)}</button><button class="sec" data-c="no" style="width:auto;margin-top:0;padding:0 14px">Vaciar</button></div>`:'';
+$('kCarro').innerHTML=ids.length?ids.map(i=>{const p=kProd.find(x=>x.id===i);return `<div class="row"><div style="flex:1"><b>${esc(p.nombre)}</b><br><small>${kCart[i]} × ${money(p.precio)}</small></div><button class="chip" data-c="-" data-i="${i}">−</button><b>${money(kCart[i]*p.precio)}</b><button class="chip" data-c="+" data-i="${i}">＋</button></div>`}).join('')+`<div style="display:flex;gap:8px;margin-top:10px"><button class="big" data-c="ok" style="flex:1;padding:16px;font-size:20px">Cobrar ${money(tot)}</button><button class="sec" data-c="fi" style="width:auto;margin-top:0;padding:0 14px">Fiar</button><button class="sec" data-c="no" style="width:auto;margin-top:0;padding:0 14px">Vaciar</button></div>`:'';
 $('kLista').innerHTML=kProd.filter(p=>p.nombre.toLowerCase().includes(q)).map(p=>{const s=kStock(p);return `<div class="row" data-v="${p.id}"><div style="flex:1"><b>${esc(p.nombre)}</b><br><small>${money(p.precio)} · stock <span style="${s<=p.minimo?'color:#c62828;font-weight:700':''}">${s}</span></small></div><b style="font-size:22px">＋</b></div>`}).join('')||`<div class="st">Todavía no hay productos${adm?'. Cargalos en Stock':''}.</div>`;
 if(!adm)return;
 const fila=p=>{const s=kStock(p);return `<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><b>${esc(p.nombre)}</b><b style="${s<=p.minimo?'color:#c62828':''}">${s}</b></div><small>Costo ${money(p.costo)} · Venta ${money(p.precio)} · aviso en ${p.minimo}</small><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="chip" data-k="in" data-i="${p.id}">＋ Ingreso</button><button class="chip" data-k="aj" data-i="${p.id}">Ajustar</button><button class="chip" data-k="ed" data-i="${p.id}">✏️</button></div></div>`};
@@ -47,16 +53,17 @@ $('kBuscar').oninput=e=>{kFiltro=e.target.value;kPintar()};
 $('kLista').onclick=e=>{const r=e.target.closest('[data-v]');if(!r)return;kCart[r.dataset.v]=(kCart[r.dataset.v]||0)+1;kPintar()};
 $('kCarro').onclick=e=>{
 const c=e.target.dataset.c,i=e.target.dataset.i;if(!c)return;
-if(c==='+')kCart[i]++;else if(c==='-')kCart[i]=Math.max(0,kCart[i]-1);else if(c==='no')kCart={};else if(c==='ok')return kCobrar();
+if(c==='+')kCart[i]++;else if(c==='-')kCart[i]=Math.max(0,kCart[i]-1);else if(c==='no')kCart={};else if(c==='fi'){const n=(prompt('¿A quién se le fía?')||'').trim();if(!n)return;return kCobrar(n)}else if(c==='ok')return kCobrar();
 kPintar();
 };
-function kCobrar(){
+function kCobrar(cli){
 const ids=Object.keys(kCart).filter(i=>kCart[i]>0&&kProd.some(p=>p.id===i));
 if(!ids.length)return;
 let tot=0;
-ids.forEach(i=>{const p=kProd.find(x=>x.id===i),t=p.precio*kCart[i];tot+=t;kCola.push({sid:crypto.randomUUID(),pid:i,tipo:'venta',cant:kCart[i],precio:p.precio,total:t,f:kAhora()})});
+ids.forEach(i=>{const p=kProd.find(x=>x.id===i),t=p.precio*kCart[i];tot+=t;kCola.push({sid:crypto.randomUUID(),pid:i,tipo:'venta',cant:kCart[i],precio:p.precio,costo:p.costo,total:t,fiado:!!cli,f:kAhora()})});
+if(cli)kCola.push({sid:crypto.randomUUID(),tipo:'cuenta',cliente:cli,monto:tot,nota:'Venta',f:kAhora()});
 kGuardarCola();kCart={};
-$('kMsg').textContent='✔ Venta guardada: '+money(tot);setTimeout(()=>$('kMsg').textContent='',4000);
+$('kMsg').textContent=(cli?'✔ Fiado a '+cli+': ':'✔ Venta guardada: ')+money(tot);setTimeout(()=>$('kMsg').textContent='',4000);
 kPintar();renderEstado();kSync();
 }
 
