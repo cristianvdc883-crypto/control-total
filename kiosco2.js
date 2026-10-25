@@ -127,7 +127,7 @@ $('kHist').onclick=e=>eClick(e,r=>r===true?kHistPintar():kMovs());
 /* ---------- Deudas (fiados) ---------- */
 async function kDeu(){
 if(navigator.onLine){
-const {data,error}=await sb.from('k_cuenta').select('cliente,monto').eq('campo_id',perfil.campo_id).limit(5000);
+const {data,error}=await sb.from('k_cuenta').select('cliente,monto').eq('campo_id',perfil.campo_id).eq('cerrada',false).limit(5000);
 if(!error){dSaldo={};data.forEach(x=>dSaldo[x.cliente]=(dSaldo[x.cliente]||0)+ +x.monto);localStorage.setItem('k_cta',JSON.stringify(dSaldo))}
 }
 dPintar();
@@ -143,7 +143,7 @@ return `<div class="row" style="display:block"><div style="display:flex;justify-
 }
 async function dAbrir(c){
 if(!navigator.onLine){alert('Necesitás señal para ver el detalle.');return}
-const {data,error}=await sb.from('k_cuenta').select('id,monto,nota,created_at').eq('campo_id',perfil.campo_id).eq('cliente',c).order('created_at',{ascending:false}).limit(100);
+const {data,error}=await sb.from('k_cuenta').select('id,monto,nota,created_at').eq('campo_id',perfil.campo_id).eq('cliente',c).eq('cerrada',false).order('created_at',{ascending:false}).limit(100);
 if(error)return alert('No se pudo: '+error.message);
 dDet=c;dEnt=data;dPintar();
 }
@@ -180,8 +180,8 @@ if(!n||n===c)return;
 return dCambio(q().update({cliente:n}).eq('campo_id',perfil.campo_id).eq('cliente',c),true);
 }
 if(d==='del'){
-if(!confirm('¿Borrar a '+c+' y todo su historial de deuda?'))return;
-return dCambio(q().delete().eq('campo_id',perfil.campo_id).eq('cliente',c),true);
+if(!confirm('¿Borrar a '+c+' y su deuda actual?'))return;
+return dCambio(q().delete().eq('campo_id',perfil.campo_id).eq('cliente',c).eq('cerrada',false),true);
 }
 };
 $('dNueva').onclick=()=>{
@@ -196,4 +196,3 @@ dCola(c,m,$('dN').value.trim()||'Deuda anterior');
 }
 $('dForm').innerHTML='';
 };
-  
